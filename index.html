@@ -1,91 +1,49 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat IA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <title>Full-Screen Chatbot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="h-screen flex flex-col bg-gray-100">
 
-    <!-- Conteneur principal -->
-    <div class="flex flex-1 overflow-hidden">
+<body class="h-screen w-screen bg-gray-100 flex flex-col p-4">
 
-        <!-- Historique des conversations (gauche) -->
-        <div class="w-1/4 bg-white border-r border-gray-300 p-4 overflow-y-auto">
-            <h2 class="text-xl font-bold mb-4">Historique</h2>
-            <ul id="chatHistory" class="space-y-2">
-                <!-- Les conversations apparaîtront ici -->
-                <li class="p-2 bg-gray-100 rounded">Conversation 1</li>
-                <li class="p-2 bg-gray-100 rounded">Conversation 2</li>
-            </ul>
-        </div>
+  <!-- Step 1 -->
+  <div class="mb-4">
+    <p class="text-xl font-semibold mb-2">Step 1: Initialize WebLLM and Download Model</p>
+    <div class="download-container flex items-center gap-3">
+      <select id="model-selection" class="border border-gray-300 rounded-lg p-2 bg-white shadow-sm flex-1"></select>
+      <button id="download"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        Download
+      </button>
+    </div>
+    <p id="download-status" class="hidden text-sm text-gray-700 mt-2"></p>
+  </div>
 
-        <!-- Zone de chat principal (centre) -->
-        <div class="flex-1 flex flex-col">
-            <!-- Messages -->
-            <div id="chatWindow" class="flex-1 p-4 overflow-y-auto bg-gray-50">
-                <div class="mb-2"><strong>IA :</strong> Bonjour ! Comment puis-je vous aider ?</div>
-            </div>
-
-            <!-- Cadre d'écriture -->
-            <div class="p-4 border-t border-gray-300 bg-white flex">
-                <input id="userInput" type="text" placeholder="Écrivez votre message..." class="flex-1 border border-gray-300 rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button id="sendBtn" class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600">Envoyer</button>
-            </div>
-        </div>
-
-        <!-- Gestion des modèles (droite) -->
-        <div class="w-1/4 bg-white border-l border-gray-300 p-4">
-            <h2 class="text-xl font-bold mb-4">Modèles IA</h2>
-            <select id="modelSelect" class="w-full border border-gray-300 rounded p-2 mb-2">
-                <option value="gpt-3.5">GPT-3.5</option>
-                <option value="gpt-4">GPT-4</option>
-            </select>
-            <button id="applyModel" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">Appliquer le modèle</button>
-        </div>
-
+  <!-- Step 2: Chat -->
+  <p class="text-xl font-semibold mb-2">Step 2: Chat</p>
+  <div class="chat-container flex-1 flex flex-col bg-white shadow-md rounded-lg p-4">
+    <div id="chat-box"
+      class="chat-box flex-1 overflow-y-auto border border-gray-200 rounded-md p-3 mb-3 bg-gray-50">
     </div>
 
-    <!-- Script JS simple pour le chat -->
-    <script>
-        const sendBtn = document.getElementById('sendBtn');
-        const userInput = document.getElementById('userInput');
-        const chatWindow = document.getElementById('chatWindow');
-        const chatHistory = document.getElementById('chatHistory');
+    <div id="chat-stats"
+      class="chat-stats hidden text-xs text-gray-500 mb-3">
+    </div>
 
-        sendBtn.addEventListener('click', () => {
-            const message = userInput.value.trim();
-            if (message === '') return;
+    <div class="chat-input-container flex gap-2">
+      <input type="text" id="user-input"
+        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+        placeholder="Type a message..." />
+      <button id="send" disabled
+        class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed">
+        Send
+      </button>
+    </div>
+  </div>
 
-            // Ajouter le message utilisateur
-            const userMsg = document.createElement('div');
-            userMsg.classList.add('mb-2', 'text-right');
-            userMsg.innerHTML = `<strong>Vous :</strong> ${message}`;
-            chatWindow.appendChild(userMsg);
-
-            // Ajouter un message IA fictif
-            const iaMsg = document.createElement('div');
-            iaMsg.classList.add('mb-2');
-            iaMsg.innerHTML = `<strong>IA :</strong> Merci pour votre message : "${message}"`;
-            chatWindow.appendChild(iaMsg);
-
-            // Ajouter à l'historique
-            const historyItem = document.createElement('li');
-            historyItem.classList.add('p-2', 'bg-gray-100', 'rounded');
-            historyItem.textContent = message;
-            chatHistory.appendChild(historyItem);
-
-            // Scroll automatique
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-
-            // Effacer l'input
-            userInput.value = '';
-        });
-
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') sendBtn.click();
-        });
-    </script>
+  <script src="./index.js" type="module"></script>
 </body>
 </html>
