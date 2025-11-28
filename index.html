@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-screen flex flex-col bg-gray-100">
+
+    <!-- Conteneur principal -->
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Historique des conversations (gauche) -->
+        <div class="w-1/4 bg-white border-r border-gray-300 p-4 overflow-y-auto">
+            <h2 class="text-xl font-bold mb-4">Historique</h2>
+            <ul id="chatHistory" class="space-y-2">
+                <!-- Les conversations apparaîtront ici -->
+                <li class="p-2 bg-gray-100 rounded">Conversation 1</li>
+                <li class="p-2 bg-gray-100 rounded">Conversation 2</li>
+            </ul>
+        </div>
+
+        <!-- Zone de chat principal (centre) -->
+        <div class="flex-1 flex flex-col">
+            <!-- Messages -->
+            <div id="chatWindow" class="flex-1 p-4 overflow-y-auto bg-gray-50">
+                <div class="mb-2"><strong>IA :</strong> Bonjour ! Comment puis-je vous aider ?</div>
+            </div>
+
+            <!-- Cadre d'écriture -->
+            <div class="p-4 border-t border-gray-300 bg-white flex">
+                <input id="userInput" type="text" placeholder="Écrivez votre message..." class="flex-1 border border-gray-300 rounded-l px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="sendBtn" class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600">Envoyer</button>
+            </div>
+        </div>
+
+        <!-- Gestion des modèles (droite) -->
+        <div class="w-1/4 bg-white border-l border-gray-300 p-4">
+            <h2 class="text-xl font-bold mb-4">Modèles IA</h2>
+            <select id="modelSelect" class="w-full border border-gray-300 rounded p-2 mb-2">
+                <option value="gpt-3.5">GPT-3.5</option>
+                <option value="gpt-4">GPT-4</option>
+            </select>
+            <button id="applyModel" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">Appliquer le modèle</button>
+        </div>
+
+    </div>
+
+    <!-- Script JS simple pour le chat -->
+    <script>
+        const sendBtn = document.getElementById('sendBtn');
+        const userInput = document.getElementById('userInput');
+        const chatWindow = document.getElementById('chatWindow');
+        const chatHistory = document.getElementById('chatHistory');
+
+        sendBtn.addEventListener('click', () => {
+            const message = userInput.value.trim();
+            if (message === '') return;
+
+            // Ajouter le message utilisateur
+            const userMsg = document.createElement('div');
+            userMsg.classList.add('mb-2', 'text-right');
+            userMsg.innerHTML = `<strong>Vous :</strong> ${message}`;
+            chatWindow.appendChild(userMsg);
+
+            // Ajouter un message IA fictif
+            const iaMsg = document.createElement('div');
+            iaMsg.classList.add('mb-2');
+            iaMsg.innerHTML = `<strong>IA :</strong> Merci pour votre message : "${message}"`;
+            chatWindow.appendChild(iaMsg);
+
+            // Ajouter à l'historique
+            const historyItem = document.createElement('li');
+            historyItem.classList.add('p-2', 'bg-gray-100', 'rounded');
+            historyItem.textContent = message;
+            chatHistory.appendChild(historyItem);
+
+            // Scroll automatique
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            // Effacer l'input
+            userInput.value = '';
+        });
+
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendBtn.click();
+        });
+    </script>
+</body>
+</html>
