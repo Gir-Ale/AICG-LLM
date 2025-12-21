@@ -175,8 +175,8 @@ async function sendMessage() {
     // Call RAG engine
     const finalResponse = await runRAG({
       query: text,
-      llm: currentLLM,      // pass the initialized LLM
-      mode: "qa",
+      llm: currentLLM,
+      systemPrompt: state.controls.systemPrompt,
       history: state.chatHistory,
       temperature: state.controls.temperature,
       maxTokens: 512
@@ -201,49 +201,8 @@ async function sendMessage() {
   }
 }
 
-
-
-reviewBtn.addEventListener("click", async () => {
-  const query = "Generate a literature review of the uploaded papers.";
-
-  addChatMessage("user", query);
-  updateStatus("Planning review...");
-
-  // Ensure embeddings/vector store are ready before planning/review
-  if (!state.models.embedder || state.vectorStore.length === 0) {
-    updateStatus("Embedding documents (preparing memory)...");
-    try {
-      await embedAllChunks();
-    } catch (e) {
-      console.error("Embedding failed:", e);
-      updateStatus("Embedding failed");
-      return;
-    }
-  }
-
-  try {
-
-    updateStatus("Writing review...");
-
-    const response = await runRAG({
-      query,
-      llm: await initLLM(modelSelection.value),
-      mode: "literature-review",
-      history: state.chatHistory
-    });
-
-    addChatMessage("assistant", response);
-    updateStatus("Ready");
-  } catch (err) {
-    console.error(err);
-    updateStatus("Review generation failed");
-  }
-});
-
-
-
 const DEFAULT_SYSTEM_PROMPT = 
-`You are an AI assistant operating in a retrieval-augmented generation (RAG) system.
+`You are an AI assistant operating in a retrieval-augmented generation (RAG) system, but you are expected to act like an Academic Researcher.
 Source Priority (STRICT):
 Retrieved documents (highest priority)
 General model knowledge (only if retrieval fails)
