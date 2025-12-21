@@ -1,8 +1,15 @@
-function cosineSimilarity(a, b) {
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
+// vectorStore.js
+import { embedText } from "./embeddings.js";
 
+/* ---------------------------------- */
+/* Cosine Similarity                  */
+/* ---------------------------------- */
+export function cosineSimilarity(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    throw new Error("cosineSimilarity: vectors must be arrays of equal length");
+  }
+
+  let dot = 0, normA = 0, normB = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     normA += a[i] * a[i];
@@ -12,16 +19,23 @@ function cosineSimilarity(a, b) {
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-import { embedText } from "./embeddings.js";
-
-
-// Search the in-memory `state.vectorStore` for the topK most similar entries.
-// Each entry is expected to have { text, embedding, source }.
+/* ---------------------------------- */
+/* Search Vector Store                 */
+/* ---------------------------------- */
 export async function searchVectorStore(query, topK = 5) {
-  // compute query embedding using engine or fallback
+  if (!query || typeof query !== "string" || !query.trim()) {
+    throw new Error("searchVectorStore: query must be a non-empty string");
+  }
+
+  // compute query embedding
   const queryEmbedding = await embedText(query);
 
-  const scored = state.vectorStore.map(entry => ({
+  // filter out invalid chunks
+  const validChunks = state.vectorStore.filter(
+    entry => typeof entry.text === "string" && entry.text.trim().length > 0 && Array.isArray(entry.embedding)
+  );
+
+  const scored = validChunks.map(entry => ({
     ...entry,
     score: cosineSimilarity(queryEmbedding, entry.embedding)
   }));
@@ -31,23 +45,40 @@ export async function searchVectorStore(query, topK = 5) {
     .slice(0, topK);
 }
 
-// Convenience: add or upsert entries into the vector store. If an entry lacks
-// an embedding, this will compute it (using engine or fallback).
+/* ---------------------------------- */
+/* Upsert / Add Entries                */
+/* ---------------------------------- */
 export async function upsertVectorEntries(entries = []) {
   for (const e of entries) {
+    const text = e.text || e.input;
+    if (!text || !text.trim()) {
+      console.warn("Skipping empty entry:", e);
+      continue;
+    }
+
     if (!e.embedding) {
       try {
-        e.embedding = await embedText(e.text || e.input || '');
+        e.embedding = await embedText(text);
       } catch (err) {
-        console.warn('Failed to compute embedding for entry', err);
+        console.warn("Failed to compute embedding for entry:", err, e);
         continue;
       }
     }
-    state.vectorStore.push({ text: e.text || e.input || '', embedding: e.embedding, source: e.source || 'unknown' });
+
+    state.vectorStore.push({
+      text,
+      embedding: e.embedding,
+      source: e.source || "unknown"
+    });
   }
+
+  // Update UI if available
   window.updateMemoryUI?.();
 }
 
+/* ---------------------------------- */
+/* Clear Vector Store                  */
+/* ---------------------------------- */
 export function clearVectorStore() {
   state.vectorStore = [];
   window.updateMemoryUI?.();

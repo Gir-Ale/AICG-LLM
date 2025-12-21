@@ -1,6 +1,6 @@
 import { runRAG} from "./rag.js";
 import { embedAllChunks } from "./embeddings.js";
-import { initializeWebLLMEngine, availableModels } from "./webllm.js";
+import { initLLM  , listAvailableModels } from "./webllm.js";
 
 const statusBar = document.getElementById("statusBar");
 const memoryInfo = document.getElementById("memoryInfo");
@@ -13,6 +13,7 @@ const systemPromptInput = document.getElementById("systemPrompt");
 const resetPromptBtn = document.getElementById("resetPromptBtn");
 const modelSelection = document.getElementById("model-selection");
 const downloadBtn = document.getElementById("download");
+let currentLLM = null;
 // downloadStatus element not used; omitted
 
 function updateStatus(text) {
@@ -157,34 +158,42 @@ async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text) return;
 
+  // Clear input and display user message
   chatInput.value = "";
-
-  // push and display user message (also record in global chatHistory)
   addChatMessage("user", text);
 
-  // placeholder assistant message (DOM only)
+  // Placeholder assistant message
   appendMessage({ role: "assistant", content: "typing..." });
-
   sendBtn.disabled = true;
+
   try {
-    let finalResponse = '';
-    const onProgress = (partial) => {
-      updateLastMessage(partial);
-    };
+    // Ensure LLM is initialized
+    if (!currentLLM) {
+      currentLLM = await initLLM(modelSelection.value);
+    }
 
-    await runRAG(text, { topK: 6, mode: "qa", stream: true, onProgress });
+    // Call RAG engine
+    const finalResponse = await runRAG({
+      query: text,
+      llm: currentLLM,      // pass the initialized LLM
+      mode: "qa",
+      history: state.chatHistory,
+      temperature: state.controls.temperature,
+      maxTokens: 512
+    });
 
-    // After streaming completes, the last content is in the DOM; fetch it
-    const messageDoms = chatBox.querySelectorAll('.message');
-    const lastMessageDom = messageDoms[messageDoms.length - 1];
-    finalResponse = lastMessageDom ? lastMessageDom.innerText : '';
+    // Update assistant message in DOM
+    updateLastMessage(finalResponse);
 
-    // record assistant reply in global history (store truncated to avoid huge prompts)
-    const truncated = (finalResponse && finalResponse.length > 1200) ? finalResponse.slice(0, 1200) + '\n…' : finalResponse;
+    // Record assistant reply in history (truncated to 1200 chars)
+    const truncated = finalResponse.length > 1200
+      ? finalResponse.slice(0, 1200) + '\n…'
+      : finalResponse;
     state.chatHistory.push({ role: "assistant", content: truncated });
 
-    // show citations if available
+    // Show citations if available
     showCitations();
+
   } catch (err) {
     console.error(err);
     updateLastMessage("[error]");
@@ -192,6 +201,7 @@ async function sendMessage() {
     sendBtn.disabled = false;
   }
 }
+
 
 function showCitations() {
   if (!state.lastCitations) return;
@@ -203,10 +213,13 @@ function showCitations() {
   addChatMessage("assistant", md);
 }
 
+
+
 reviewBtn.addEventListener("click", async () => {
   const query = "Generate a literature review of the uploaded papers.";
 
   addChatMessage("user", query);
+  showCitations();
   updateStatus("Planning review...");
 
   // Ensure embeddings/vector store are ready before planning/review
@@ -227,13 +240,12 @@ reviewBtn.addEventListener("click", async () => {
 
     const response = await runRAG({
       query,
-      llm: state.models.llm,
+      llm: await initLLM(modelSelection.value),
       mode: "literature-review",
       history: state.chatHistory
     });
 
     addChatMessage("assistant", response);
-    showCitations();
     updateStatus("Ready");
   } catch (err) {
     console.error(err);
@@ -243,8 +255,8 @@ reviewBtn.addEventListener("click", async () => {
 
 
 
-const DEFAULT_SYSTEM_PROMPT = `
-You are an AI assistant operating in a retrieval-augmented generation (RAG) system.
+const DEFAULT_SYSTEM_PROMPT = 
+`You are an AI assistant operating in a retrieval-augmented generation (RAG) system.
 Source Priority (STRICT):
 Retrieved documents (highest priority)
 General model knowledge (only if retrieval fails)
@@ -299,20 +311,58 @@ window.sendMessage = sendMessage;
 window.showDocumentChunks = showDocumentChunks;
 
 // Populate model selection and wire download button
-availableModels.forEach((modelId) => {
-  const option = document.createElement("option");
-  option.value = modelId;
-  option.textContent = modelId;
-  modelSelection.appendChild(option);
-});
-if (availableModels.length) modelSelection.value = availableModels[0];
+function populateModelList() {
+  const models = listAvailableModels();
 
-downloadBtn.addEventListener("click", () => {
-  const sel = modelSelection.value;
-  if (!sel) return;
-  initializeWebLLMEngine(sel).then(() => {
-    sendBtn.disabled = false;
-  }).catch(err => {
-    console.error(err);
-  });
+  modelSelection.innerHTML = "";
+
+  if (!models.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No models available";
+    modelSelection.appendChild(opt);
+    modelSelection.disabled = true;
+    downloadBtn.disabled = true;
+    return;
+  }
+
+  for (const modelId of models) {
+    const option = document.createElement("option");
+    option.value = modelId;
+    option.textContent = modelId;
+    modelSelection.appendChild(option);
+  }
+
+  modelSelection.disabled = false;
+  downloadBtn.disabled = false;
+  modelSelection.value = models[0];
+}
+
+populateModelList();
+
+downloadBtn.addEventListener("click", async () => {
+  downloadmodel();
 });
+
+async function downloadmodel() {
+  const modelId = modelSelection.value;
+  if (!modelId) return;
+
+  sendBtn.disabled = true;
+  downloadBtn.disabled = true;
+
+  try {
+    updateStatus(`Downloading model: ${modelId}`);
+    await initLLM(modelId);
+    currentLLM = await initLLM(modelId);
+    updateStatus(`Model ready: ${modelId}`);
+  } catch (err) {
+    console.error(err);
+    updateStatus("Failed to load model");
+  } finally {
+    sendBtn.disabled = false;
+    downloadBtn.disabled = false;
+  }
+}
+//initial loading of model
+downloadmodel();
