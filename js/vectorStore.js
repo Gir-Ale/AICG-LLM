@@ -1,5 +1,6 @@
 // vectorStore.js
 import { embedText } from "./embeddings.js";
+const state = window.state;
 
 /* ---------------------------------- */
 /* Cosine Similarity                  */

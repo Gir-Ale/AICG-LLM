@@ -1,5 +1,5 @@
 import { runRAG} from "./rag.js";
-import { embedAllChunks } from "./embeddings.js";
+
 import { initLLM  , listAvailableModels } from "./webllm.js";
 
 const statusBar = document.getElementById("statusBar");
@@ -7,7 +7,6 @@ const memoryInfo = document.getElementById("memoryInfo");
 const chatBox = document.getElementById("chat-box");
 const chatInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send");
-const reviewBtn = document.getElementById("reviewBtn");
 const tempSlider = document.getElementById("tempSlider");
 const systemPromptInput = document.getElementById("systemPrompt");
 const resetPromptBtn = document.getElementById("resetPromptBtn");
@@ -229,7 +228,7 @@ Sources:
 Hard Fail Conditions:
 Do NOT hallucinate facts or citations.
 Do NOT answer without citations.
-If neither retrieved documents nor reliable general knowledge are sufficient, say so explicitly.
+If retrieved content is insufficient, summarize what is available from the documents only and acknowledge the issue.
 `;
 
 systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
@@ -298,7 +297,6 @@ async function downloadmodel() {
 
   try {
     updateStatus(`Downloading model: ${modelId}`);
-    await initLLM(modelId);
     currentLLM = await initLLM(modelId);
     updateStatus(`Model ready: ${modelId}`);
   } catch (err) {
