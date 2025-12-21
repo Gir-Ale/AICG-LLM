@@ -45,10 +45,14 @@
         <!-- Memory Bank -->
         <div class="bg-white p-4 rounded shadow">
           <h2 class="font-semibold mb-2">Memory Bank</h2>
-          <div id="memoryInfo" class="text-sm text-gray-600">
+          <div id="memoryInfo" class="text-sm text-gray-600 mb-2">
             No documents loaded.
           </div>
-          <div id="memoryDetails" class="mt-2 text-sm text-gray-700"></div>
+
+          <!-- Fixed-size scrollable container for chunks -->
+          <div id="memoryDetailsContainer" class="border rounded p-2 h-32 overflow-y-auto">
+            <div id="memoryDetails" class="text-sm text-gray-700"></div>
+          </div>
         </div>
 
         <!-- System Controls -->
