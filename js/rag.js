@@ -23,13 +23,17 @@ function groupBySource(chunks) {
 /* Context Retrieval                  */
 /* ---------------------------------- */
 
-async function retrieveContext({
-  query,
-  topK,
-  maxChars,
-
-}) {
+async function retrieveContext({ query, topK, maxChars }) {
   const results = await searchVectorStore(query, topK);
+  
+  console.log("RAG Debug - Query:", query);
+  console.log("RAG Debug - Retrieved results:", results.length);
+  
+  // Log first result if exists
+  if (results.length > 0) {
+    console.log("RAG Debug - Top result score:", results[0].score);
+    console.log("RAG Debug - Top result text (first 200 chars):", results[0].text.substring(0, 200));
+  }
   const chunks = [];
 
   const perChunkLimit = 400;
@@ -90,7 +94,7 @@ export async function runRAG({
   systemPrompt = "You are an academic researcher.",
   history = [],
   temperature = 0.2,
-  maxTokens = 512
+  maxTokens = 2048
 }) {
   let context = "";
 
@@ -98,7 +102,7 @@ export async function runRAG({
     context = await retrieveContext({
       query,
       topK: 4 ,
-      maxChars: 3000,
+      maxChars: 30000,
     });
   }
 

@@ -33,8 +33,16 @@ function updateMemoryUI() {
   let html = `
     Documents: ${state.documents.length}<br/>
     Chunks: ${state.chunks.length}<br/>
-    Vectors: ${state.vectorStore.length}<br/><br/>
+    Vectors: ${state.vectorStore.length}<br/>
   `;
+  
+  if (state.chunks.length > 0 && state.vectorStore.length === 0) {
+    html += `<span class="text-yellow-600 text-xs">(Processing...)</span><br/><br/>`;
+  } else if (state.vectorStore.length === 0) {
+    html += `<span class="text-gray-500 text-xs">(No vectors yet)</span><br/><br/>`;
+  } else {
+    html += `<span class="text-green-600 text-xs">(Ready for search)</span><br/><br/>`;
+  }
 
   for (const [file, count] of Object.entries(sources)) {
     html += `<button class="memory-file text-left w-full text-sm py-1" data-source="${file}">📄 ${file}: ${count} vectors</button>`;

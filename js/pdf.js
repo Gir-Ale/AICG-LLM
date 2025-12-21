@@ -8,6 +8,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 const pdfInput = document.getElementById("pdfInput");
 const dropZone = document.getElementById("pdfDropZone");
 
+function cleanText(text) {
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/-\s+/g, "")
+    .trim();
+}
+
 if (dropZone) {
   dropZone.addEventListener("click", () => pdfInput.click());
 
@@ -90,11 +97,4 @@ export async function extractPdfText(file) {
       source: file.name
     });
   });
-}
-
-function cleanText(text) {
-  return text
-    .replace(/\s+/g, " ")
-    .replace(/-\s+/g, "")
-    .trim();
 }
