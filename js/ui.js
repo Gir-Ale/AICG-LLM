@@ -1,11 +1,10 @@
-import { runRAG, generateReviewPlan } from "./rag.js";
+import { runRAG} from "./rag.js";
 import { embedAllChunks } from "./embeddings.js";
 import { initializeWebLLMEngine, availableModels } from "./webllm.js";
 
 const statusBar = document.getElementById("statusBar");
 const memoryInfo = document.getElementById("memoryInfo");
 const chatBox = document.getElementById("chat-box");
-const chatStats = document.getElementById("chat-stats");
 const chatInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send");
 const reviewBtn = document.getElementById("reviewBtn");
@@ -223,14 +222,14 @@ reviewBtn.addEventListener("click", async () => {
   }
 
   try {
-    const plan = await generateReviewPlan();
 
     updateStatus("Writing review...");
 
-    const response = await runRAG(query, {
+    const response = await runRAG({
+      query,
+      llm: state.models.llm,
       mode: "literature-review",
-      topK: 15,
-      plan
+      history: state.chatHistory
     });
 
     addChatMessage("assistant", response);
@@ -245,10 +244,34 @@ reviewBtn.addEventListener("click", async () => {
 
 
 const DEFAULT_SYSTEM_PROMPT = `
-You are an academic researcher.
-Use ONLY the provided context.
-Do not hallucinate sources.
-Structure answers clearly and concisely.
+You are an AI assistant operating in a retrieval-augmented generation (RAG) system.
+Source Priority (STRICT):
+Retrieved documents (highest priority)
+General model knowledge (only if retrieval fails)
+Rules (NON-NEGOTIABLE):
+You must search the retrieved documents first for every question.
+If any relevant information exists, you must use it and must not rely on general knowledge.
+Use general knowledge only if no retrieved content is relevant.
+Never mix retrieved content and general knowledge in the same factual claim.
+
+Citations (MANDATORY):
+Every factual statement must be cited.
+Use:
+[Retrieved: <doc_id / title / chunk>]
+[Model general knowledge]
+If no retrieved content is relevant, explicitly say so before using general knowledge.
+Response Format (REQUIRED):
+Retrieval Check:
+<Relevant / Not relevant>
+Answer:
+<Answer with inline citations>
+Sources:
+- <source list>
+
+Hard Fail Conditions:
+Do NOT hallucinate facts or citations.
+Do NOT answer without citations.
+If neither retrieved documents nor reliable general knowledge are sufficient, say so explicitly.
 `;
 
 systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;

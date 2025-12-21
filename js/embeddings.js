@@ -1,13 +1,10 @@
-// Prefer using the WebLLM engine's embeddings API when available to avoid
-// loading a heavy separate embedder. Fallback to the Hugging Face
-// transformers pipeline only when necessary.
 
 let hfPipeline = null;
 import { upsertVectorEntries } from "./vectorStore.js";
 
 async function loadHFPipeline() {
   if (hfPipeline) return hfPipeline;
-  // lazy-import HF pipeline only if needed
+
   const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1');
   window.updateStatus?.("Loading embedding model (HF)...");
   hfPipeline = await pipeline(
@@ -20,23 +17,6 @@ async function loadHFPipeline() {
 }
 
 export async function embedText(text) {
-  // If WebLLM engine provides embeddings, use it
-  if (state.models && state.models.llm && state.models.llm.embeddings && typeof state.models.llm.embeddings.create === 'function') {
-    try {
-      const resp = await state.models.llm.embeddings.create({ input: text });
-      // Normalize response shapes from different implementations
-      if (resp && Array.isArray(resp.data) && resp.data[0] && resp.data[0].embedding) {
-        return resp.data[0].embedding;
-      }
-      if (resp && resp.embedding) return resp.embedding;
-      // fallback: if engine returned plain array
-      if (Array.isArray(resp)) return resp;
-    } catch (e) {
-      console.warn('Engine embeddings.create failed, falling back to HF pipeline:', e);
-    }
-  }
-
-  // Fallback to Hugging Face pipeline
   const embedder = await loadHFPipeline();
   const output = await embedder(text, { pooling: 'mean', normalize: true });
   return Array.from(output.data);

@@ -4,7 +4,7 @@ let engine = null;
 let workerInstance = null;
 // Preferred model IDs to try (fallbacks)
 const MODEL_CANDIDATES = [
-  "Llama-3.1-8B-Instruct",
+  "Llama-3.2-1B-Instruct-q4f32_1-MLC",
   "Llama-3.2-1B-Instruct",
   "Llama-3.2-1B"
 ];

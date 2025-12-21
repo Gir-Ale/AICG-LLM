@@ -14,31 +14,12 @@ function cosineSimilarity(a, b) {
 
 import { embedText } from "./embeddings.js";
 
-// Helper to obtain an embedding for a text using the WebLLM engine if available,
-// otherwise falling back to the local embedder from `embeddings.js`.
-export async function getEmbeddingForText(text) {
-  if (state.models && state.models.llm && state.models.llm.embeddings && typeof state.models.llm.embeddings.create === 'function') {
-    try {
-      const resp = await state.models.llm.embeddings.create({ input: text });
-      if (resp && Array.isArray(resp.data) && resp.data[0] && resp.data[0].embedding) {
-        return resp.data[0].embedding;
-      }
-      if (resp && resp.embedding) return resp.embedding;
-      if (Array.isArray(resp)) return resp;
-    } catch (e) {
-      console.warn('Engine embeddings.create failed, falling back to embedText():', e);
-    }
-  }
-
-  // Fallback to existing embedText implementation
-  return embedText(text);
-}
 
 // Search the in-memory `state.vectorStore` for the topK most similar entries.
 // Each entry is expected to have { text, embedding, source }.
 export async function searchVectorStore(query, topK = 5) {
   // compute query embedding using engine or fallback
-  const queryEmbedding = await getEmbeddingForText(query);
+  const queryEmbedding = await embedText(query);
 
   const scored = state.vectorStore.map(entry => ({
     ...entry,
@@ -56,7 +37,7 @@ export async function upsertVectorEntries(entries = []) {
   for (const e of entries) {
     if (!e.embedding) {
       try {
-        e.embedding = await getEmbeddingForText(e.text || e.input || '');
+        e.embedding = await embedText(e.text || e.input || '');
       } catch (err) {
         console.warn('Failed to compute embedding for entry', err);
         continue;
