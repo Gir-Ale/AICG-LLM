@@ -191,8 +191,7 @@ async function sendMessage() {
       : finalResponse;
     state.chatHistory.push({ role: "assistant", content: truncated });
 
-    // Show citations if available
-    showCitations();
+
 
   } catch (err) {
     console.error(err);
@@ -203,23 +202,11 @@ async function sendMessage() {
 }
 
 
-function showCitations() {
-  if (!state.lastCitations) return;
-  let md = "**Sources Used:**\n";
-  for (const [source, count] of Object.entries(state.lastCitations)) {
-    md += `- ${source} (${count} chunks)\n`;
-  }
-
-  addChatMessage("assistant", md);
-}
-
-
 
 reviewBtn.addEventListener("click", async () => {
   const query = "Generate a literature review of the uploaded papers.";
 
   addChatMessage("user", query);
-  showCitations();
   updateStatus("Planning review...");
 
   // Ensure embeddings/vector store are ready before planning/review
@@ -306,7 +293,6 @@ resetPromptBtn.addEventListener("click", () => {
 window.updateStatus = updateStatus;
 window.updateMemoryUI = updateMemoryUI;
 window.addChatMessage = addChatMessage;
-window.showCitations = showCitations;
 window.sendMessage = sendMessage;
 window.showDocumentChunks = showDocumentChunks;
 
