@@ -1,4 +1,4 @@
-**Local LLM Literature Reviewer** is a WebLLM-based app that allowss the user to chat with alocallyly hosted AI agent.
+**Local LLM Literature Reviewer** is a WebLLM-based app that allows the user to chat with a localy hosted AI agent.
 The entire system runs on the user's machine, allowing total privacy when sending sensitive documents to the agent.
 
 **Demo: https://gir-ale.github.io/AICG-LLM/**
