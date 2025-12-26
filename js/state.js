@@ -5,18 +5,19 @@ window.state = {
 
   chatHistory: [],
 
-  models: {
+  models: 
+  {
     embedder: null,
     llm: null
   },
 
-  status: "Initializing..."
+  status: "Initializing...",
+
+  temperature: 0.4,
+  systemPrompt: "",
+  tokens: 512
 };
 
-state.controls = {
-  temperature: 0.4,
-  systemPrompt: ""
-};
 
 state.lastCitations = {};
 

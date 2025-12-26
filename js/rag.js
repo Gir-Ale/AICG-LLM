@@ -1,5 +1,4 @@
 // ragEngine.js
-
 import { searchVectorStore } from "./vectorStore.js";
 
 /* ---------------------------------- */
@@ -11,31 +10,13 @@ const estimateTokens = (text = "") => Math.ceil(text.length / 4);
 const truncate = (text = "", maxChars) =>
   text.length > maxChars ? text.slice(0, maxChars) + "…" : text;
 
-function groupBySource(chunks) {
-  return chunks.reduce((acc, c) => {
-    acc[c.source] ??= [];
-    acc[c.source].push(c.text);
-    return acc;
-  }, {});
-}
-
 /* ---------------------------------- */
 /* Context Retrieval                  */
 /* ---------------------------------- */
 
 async function retrieveContext({ query, topK, maxChars }) {
   const results = await searchVectorStore(query, topK);
-  
-  console.log("RAG Debug - Query:", query);
-  console.log("RAG Debug - Retrieved results:", results.length);
-  
-  // Log first result if exists
-  if (results.length > 0) {
-    console.log("RAG Debug - Top result score:", results[0].score);
-    console.log("RAG Debug - Top result text (first 200 chars):", results[0].text.substring(0, 200));
-  }
   const chunks = [];
-
   const perChunkLimit = 400;
   let used = 0;
 
@@ -56,7 +37,7 @@ async function retrieveContext({ query, topK, maxChars }) {
 /* Prompt Builder                     */
 /* ---------------------------------- */
 
-function buildMessages({ systemPrompt, userPrompt, context = "", history = [], historyBudget = 256 }) {
+function buildMessages({ systemPrompt = state.systemPrompt, userPrompt, context = "",   history = state.chatHistory, historyBudget = 512 }) {
   // Merge system prompt + context
   let fullSystemPrompt = systemPrompt;
   if (context) fullSystemPrompt += "\n\nCONTEXT:\n" + context;
@@ -89,28 +70,19 @@ function buildMessages({ systemPrompt, userPrompt, context = "", history = [], h
 
 export async function runRAG({
   query,
-  llm,
-  embedderAvailable = true,
-  systemPrompt = "You are an academic researcher.",
-  history = [],
-  temperature = 0.2,
-  maxTokens = 2048
+  llm = state.models.llm,
+  temperature = state.temperature,
+  maxTokens = state.tokens
 }) {
-  let context = "";
-
-  if (embedderAvailable) {
-    context = await retrieveContext({
+  let context = await retrieveContext({
       query,
       topK: 4 ,
       maxChars: 30000,
     });
-  }
 
   const messages = buildMessages({
-    systemPrompt,
     userPrompt: query,
-    context,
-    history
+    context
   });
 
   const reply = await llm.chat.completions.create({
