@@ -1,9 +1,5 @@
 import * as webllm from "https://esm.run/@mlc-ai/web-llm";
-
-let currentModel = null;
 let engine = null;
-
-
 
 /* ------------------------------------------------------------------ */
 /* Status                                                             */
@@ -33,7 +29,7 @@ function progressHandler(prefix) {
 
 export async function initLLM(modelId = null) {
   const models = listAvailableModels();
-  const selectedModel = modelId || models[0];
+  const selectedModel = modelId || models[3] || models[0]; // default to 4th model if available
 
   reportStatus(`Loading model: ${selectedModel}`);
   if (!engine) {
@@ -44,7 +40,6 @@ export async function initLLM(modelId = null) {
     await engine.reload(selectedModel, {
       progressCallback: progressHandler(`Loading ${selectedModel}`)
     });
-    currentModel = selectedModel;
 
     reportStatus(`LLM ready (${selectedModel})`);
     console.info("LLM loaded:", selectedModel);

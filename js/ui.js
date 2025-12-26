@@ -361,4 +361,4 @@ async function downloadmodel() {
   }
 }
 
-downloadmodel();
+state.models.llm = await initLLM(); // Preload default model
