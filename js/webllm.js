@@ -36,8 +36,9 @@ export async function initLLM(modelId = null) {
   const selectedModel = modelId || models[0];
 
   reportStatus(`Loading model: ${selectedModel}`);
-  if (!engine) engine = await webllm.CreateMLCEngine(selectedModel, { initProgressCallback: progressHandler(`Loading ${selectedModel}`)});
-
+  if (!engine) {
+    engine = new webllm.MLCEngine({ initProgressCallback: progressHandler(`Loading ${selectedModel}`)});
+  }
 
   try {
     await engine.reload(selectedModel, {

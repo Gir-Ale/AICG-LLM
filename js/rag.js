@@ -72,7 +72,8 @@ export async function runRAG({
   query,
   llm = state.models.llm,
   temperature = state.temperature,
-  maxTokens = state.tokens
+  maxTokens = state.tokens,
+  systemPrompt = state.systemPrompt
 }) {
   let context = await retrieveContext({
       query,
@@ -81,8 +82,30 @@ export async function runRAG({
     });
 
   const messages = buildMessages({
+    systemPrompt,
     userPrompt: query,
     context
+  });
+
+  const reply = await llm.chat.completions.create({
+    messages,
+    temperature,
+    max_tokens: maxTokens
+  });
+
+  return reply.choices[0].message.content;
+}
+
+export async function runHistoryRAG({
+  query,
+  llm = state.models.llm,
+  temperature = state.temperature,
+  maxTokens = state.tokens/4,
+  systemPrompt = "Condense the message into a minimal, information-dense summary for LLM memory. Keep all essential facts; remove redundancy and fluff. Output only the summary."
+}) {
+  const messages = buildMessages({
+    systemPrompt,
+    userPrompt: query,
   });
 
   const reply = await llm.chat.completions.create({

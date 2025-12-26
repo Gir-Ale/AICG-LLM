@@ -1,4 +1,4 @@
-import { runRAG} from "./rag.js";
+import { runRAG, runHistoryRAG} from "./rag.js";
 
 import { initLLM  , listAvailableModels } from "./webllm.js";
 
@@ -124,10 +124,24 @@ function updateLastMessage(content) {
 // Backwards-compatible helper
 function addChatMessage(role, content) {
   // do not push system messages into chat history
-  if (role !== 'system') {
-    state.chatHistory.push({ role, content });
+  if (role !== "system") {
+    historyCompact(role, content);
   }
   appendMessage({ role, content });
+}
+
+// Compact chat history by running RAG on it and storing the response
+async function historyCompact(role, content) {
+  const safeContent = typeof content === "string" ? content : "";
+
+  const response = await runHistoryRAG({
+    query: safeContent
+  });
+
+  state.chatHistory.push({
+    role,
+    content: String(response)
+  });
 }
 
 sendBtn.addEventListener("click", sendMessage);
@@ -191,12 +205,9 @@ async function sendMessage() {
     // Update assistant message in DOM
     updateLastMessage(Response);
 
-    // Record assistant reply in history (truncated to 1200 chars)
-    const truncated = Response.length > 1200
-      ? Response.slice(0, 1200) + '\n…'
-      : Response;
-    state.chatHistory.push({ role: "assistant", content: truncated });
+    // Record assistant reply in history
 
+    historyCompact("assistant", Response);
 
 
   } catch (err) {

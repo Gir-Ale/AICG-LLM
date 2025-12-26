@@ -13,9 +13,9 @@ window.state = {
 
   status: "Initializing...",
 
-  temperature: 0.4,
+  temperature: 0.5,
   systemPrompt: "",
-  tokens: 512
+  tokens: 1024
 };
 
 
