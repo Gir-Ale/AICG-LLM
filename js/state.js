@@ -15,7 +15,7 @@ window.state = {
 
   temperature: 0.5,
   systemPrompt: "",
-  tokens: 1024
+  tokens: 2048
 };
 
 

@@ -12,6 +12,7 @@ const systemPromptInput = document.getElementById("systemPrompt");
 const resetPromptBtn = document.getElementById("resetPromptBtn");
 const modelSelection = document.getElementById("model-selection");
 const downloadBtn = document.getElementById("download");
+const tokenInput = document.getElementById("tokenLimit");
 // downloadStatus element not used; omitted
 
 function updateStatus(text) // Update status bar text
@@ -93,6 +94,28 @@ function renderMarkdown(mdText) //markdown to sanitized HTML
   }
 }
 
+//control token input
+let prevValue = parseInt(tokenInput.value, 10);
+
+tokenInput.addEventListener("input", () => {
+  let val = parseInt(tokenInput.value, 10);
+
+  if (isNaN(val)) val = prevValue;
+
+  if (val > prevValue) {
+    // Increased → double
+    val = prevValue * 2;
+    if (val > 32768) val = 32768;
+  } else if (val < prevValue) {
+    // Decreased → halve
+    val = prevValue / 2;
+    if (val < 128) val = 128;
+  }
+
+  tokenInput.value = val;
+  state.tokens = val;
+  prevValue = val;
+});
 
 function appendMessage(message) {
   const container = document.createElement("div");
