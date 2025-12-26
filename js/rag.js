@@ -37,29 +37,47 @@ async function retrieveContext({ query, topK, maxChars }) {
 /* Prompt Builder                     */
 /* ---------------------------------- */
 
-function buildMessages({ systemPrompt = state.systemPrompt, userPrompt, context = "",   history = state.chatHistory, historyBudget = 512 }) {
-  // Merge system prompt + context
+function buildMessages({
+  systemPrompt = state.systemPrompt,
+  userPrompt,
+  context = "",
+  history = state.chatHistory,
+  historyBudget = 512
+}) {
   let fullSystemPrompt = systemPrompt;
   if (context) fullSystemPrompt += "\n\nCONTEXT:\n" + context;
 
   const messages = [
-    { role: "system", content: fullSystemPrompt }  // MUST be first and ONLY system message
+    { role: "system", content: fullSystemPrompt }
   ];
 
-  // Append chat history
   let used = 0;
+
   for (let i = history.length - 1; i >= 0; i--) {
-    const t = estimateTokens(history[i].content);
+    const msg = history[i];
+
+    if (
+      !msg ||
+      typeof msg.content !== "string" ||
+      !msg.role
+    ) continue;
+
+    const t = estimateTokens(msg.content);
     if (used + t > historyBudget) break;
-    messages.push(history[i]);  // user or assistant
+
+    messages.push({
+      role: msg.role,
+      content: msg.content
+    });
+
     used += t;
   }
 
-  // Finally, append current user message
-  messages.push({ role: "user", content: userPrompt });
+  messages.push({ role: "user", content: String(userPrompt) });
 
   return messages;
 }
+
 
 
 
@@ -106,6 +124,7 @@ export async function runHistoryRAG({
   const messages = buildMessages({
     systemPrompt,
     userPrompt: query,
+    
   });
 
   const reply = await llm.chat.completions.create({

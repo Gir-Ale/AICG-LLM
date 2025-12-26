@@ -132,16 +132,18 @@ function addChatMessage(role, content) {
 
 // Compact chat history by running RAG on it and storing the response
 async function historyCompact(role, content) {
-  const safeContent = typeof content === "string" ? content : "";
+  if (typeof content !== "string") return;
 
-  const response = await runHistoryRAG({
-    query: safeContent
-  });
+  const summary = await runHistoryRAG({ query: content });
 
   state.chatHistory.push({
     role,
-    content: String(response)
+    content: String(summary)
   });
+
+  // For debugging: log current chat history
+  console.log("Current history:");
+  console.table(state.chatHistory.map(m => ({ role: m.role, content: m.content?.slice(0,50) })));
 }
 
 sendBtn.addEventListener("click", sendMessage);
@@ -207,7 +209,7 @@ async function sendMessage() {
 
     // Record assistant reply in history
 
-    historyCompact("assistant", Response);
+    await historyCompact("assistant", Response);
 
 
   } catch (err) {

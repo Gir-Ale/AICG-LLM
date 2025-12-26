@@ -1,7 +1,7 @@
 window.state = {
-  documents: [],   // { filename, text }
-  chunks: [],      // { text, source }
-  vectorStore: [], // Phase 2
+  documents: [],
+  chunks: [],
+  vectorStore: [],
 
   chatHistory: [],
 
