@@ -7,30 +7,40 @@ import { searchVectorStore } from "./vectorStore.js";
 
 const estimateTokens = (text = "") => Math.ceil(text.length / 4);
 
-const truncate = (text = "", maxChars) =>
-  text.length > maxChars ? text.slice(0, maxChars) + "…" : text;
-
 /* ---------------------------------- */
 /* Context Retrieval                  */
 /* ---------------------------------- */
 
-async function retrieveContext({ query, topK, maxChars }) {
+async function retrieveContext({ query, topK = 5, maxChars = 2000 }) {
+  // Step 1: Query the vector store for top-K relevant chunks
   const results = await searchVectorStore(query, topK);
+  // Step 2: Sort by similarity descending (if searchVectorStore doesn't already)
+  results.sort((a, b) => b.similarity - a.similarity);
   const chunks = [];
-  const perChunkLimit = 400;
-  let used = 0;
-
+  let usedChars = 0;
   for (const r of results) {
-    if (used >= maxChars) break;
+    if (usedChars >= maxChars) break;
+    // Clean the text to avoid mid-word truncation
+    const text = r.text.replace(/\s+/g, ' ').trim();
+    
+    let chunkText = text;
+    // Ensure we don’t exceed maxChars
+    if (usedChars + chunkText.length > maxChars) {
+      chunkText = chunkText.slice(0, maxChars - usedChars);
 
-    const body = truncate(r.text, Math.min(perChunkLimit, maxChars - used));
-    chunks.push(
-      `[Source: ${r.source}]\n${body}`
-    );
-    used += body.length;
+      // Optional: cut to last full sentence for readability
+      const lastPeriod = chunkText.lastIndexOf('.');
+      if (lastPeriod > 50) {
+        chunkText = chunkText.slice(0, lastPeriod + 1);
+      }
+    }
+
+    chunks.push(`[Source: ${r.source}]\n${chunkText}`);
+    usedChars += chunkText.length;
   }
-
-  return chunks.join("\n\n");
+  // Deduplicate repeated text
+  const uniqueChunks = [...new Set(chunks)];
+  return uniqueChunks.join("\n\n");
 }
 
 /* ---------------------------------- */

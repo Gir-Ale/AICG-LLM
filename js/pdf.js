@@ -83,16 +83,19 @@ export async function extractPdfText(file) {
 
   fullText = cleanText(fullText);
 
-  state.documents.push({
+  window.state = window.state || {};
+  window.state.documents = window.state.documents || [];
+  window.state.chunks = window.state.chunks || [];
+
+  window.state.documents.push({
     filename: file.name,
     text: fullText
   });
 
   // Chunk immediately after extraction
   const chunks = chunkText(fullText);
-
   chunks.forEach(chunk => {
-    state.chunks.push({
+    window.state.chunks.push({
       text: chunk,
       source: file.name
     });
