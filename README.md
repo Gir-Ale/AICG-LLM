@@ -22,3 +22,7 @@ To host the app locally:
      python -m http.server
    - Then go to:  
      **http://localhost:8000/index.html** to access the web app.
+
+##
+
+![Enregistrementdelcran2025-12-27142337-ezgif com-optimize](https://github.com/user-attachments/assets/81809358-1f6c-451c-84e6-3acdf036b735)
